@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { DayOfWeek, getDayLabel, DayStatusBadge } from "@/lib/mealUtils";
+import { DayStatusBadge } from "@/components/DayStatusBadge";
+import { DayOfWeek, getDayLabel } from "@/lib/mealUtils";
 
 interface DayCellProps {
   dayIndex: number;
