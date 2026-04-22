@@ -33,9 +33,12 @@ export function WeekPlan() {
     try {
       const weekStartStr = formatDate(weekStart);
       const response = await fetch(`/api/plans?weekStart=${weekStartStr}`);
-      // Note: We'll need to implement this endpoint or use a different approach
-      // For now, let's create a placeholder
-      console.log(`Fetching plan for week starting ${weekStartStr}`);
+      const data = await response.json();
+      if (data.success && data.data.length > 0) {
+        setCurrentPlan(data.data[0]);
+      } else {
+        setCurrentPlan(null);
+      }
     } catch (error) {
       console.error("Error fetching week plan:", error);
     } finally {
@@ -49,7 +52,7 @@ export function WeekPlan() {
   };
 
   const handleSelectRecipe = async (recipeId: number, recipeTitle: string) => {
-    if (!selectedDay || !currentPlan) return;
+    if (!selectedDay || !weekStart) return;
 
     setSaving(true);
     try {
@@ -59,8 +62,33 @@ export function WeekPlan() {
         [selectedDay]: recipeTitle,
       }));
 
-      // Save to API - we need to implement this properly
-      await updatePlanDay(selectedDay, recipeId);
+      // Fetch current plan or create new one
+      const weekStartStr = formatDate(weekStart);
+      let planId: number;
+      
+      if (currentPlan) {
+        planId = currentPlan.id;
+      } else {
+        // Create new plan
+        const newPlanRes = await fetch("/api/plans", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            weekStart: weekStartStr,
+            [getDayName(selectedDay)]: recipeId 
+          }),
+        });
+        const newPlanData = await newPlanRes.json();
+        if (newPlanData.success) {
+          setCurrentPlan(newPlanData.data);
+          planId = newPlanData.data.id;
+        }
+      }
+
+      if (planId) {
+        // Update existing plan with new meal
+        await updatePlanDay(planId, selectedDay, recipeId, recipeTitle);
+      }
     } catch (error) {
       console.error("Error saving recipe:", error);
     } finally {
@@ -68,32 +96,55 @@ export function WeekPlan() {
     }
   };
 
-  const updatePlanDay = async (dayIndex: number, recipeId: number) => {
-    // For now, we'll just log - need to implement proper API call
-    console.log(`Updating day ${dayIndex} with recipe ${recipeId}`);
+  const updatePlanDay = async (planId: number, dayIndex: number, recipeId: number, recipeTitle: string) => {
+    const dayName = getDayName(dayIndex);
+    
+    // Get current plan to preserve other days
+    try {
+      const currentPlanRes = await fetch(`/api/plans/${planId}`);
+      const currentPlanData = await currentPlanRes.json();
+      
+      const updatedPlan = {
+        ...currentPlanData.data.mealPlan,
+        [dayName]: recipeId,
+      };
+      
+      await fetch(`/api/plans/${planId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedPlan),
+      });
+    } catch (error) {
+      console.error("Error updating plan day:", error);
+    }
+  };
+
+  const getDayName = (index: number): string => {
+    const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+    return days[index];
   };
 
   const dayRecipes = [
     currentPlan?.mealPlan?.monday
-      ? planRecipes[0] || "Recipe assigned"
+      ? (planRecipes[0] || "Recipe assigned")
       : null,
     currentPlan?.mealPlan?.tuesday
-      ? planRecipes[1] || "Recipe assigned"
+      ? (planRecipes[1] || "Recipe assigned")
       : null,
     currentPlan?.mealPlan?.wednesday
-      ? planRecipes[2] || "Recipe assigned"
+      ? (planRecipes[2] || "Recipe assigned")
       : null,
     currentPlan?.mealPlan?.thursday
-      ? planRecipes[3] || "Recipe assigned"
+      ? (planRecipes[3] || "Recipe assigned")
       : null,
     currentPlan?.mealPlan?.friday
-      ? planRecipes[4] || "Recipe assigned"
+      ? (planRecipes[4] || "Recipe assigned")
       : null,
     currentPlan?.mealPlan?.saturday
-      ? planRecipes[5] || "Recipe assigned"
+      ? (planRecipes[5] || "Recipe assigned")
       : null,
     currentPlan?.mealPlan?.sunday
-      ? planRecipes[6] || "Recipe assigned"
+      ? (planRecipes[6] || "Recipe assigned")
       : null,
   ];
 
