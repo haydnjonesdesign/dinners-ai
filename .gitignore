@@ -1,0 +1,27 @@
+# Dependencies
+node_modules
+.next
+
+# Environment
+.env
+
+# Database
+*.sqlite
+*.sqlite3
+
+# Build output
+dist
+build
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage

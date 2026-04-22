@@ -53,6 +53,13 @@ pnpm install
 
 ### Environment Setup
 
+```bash
+# Initialize Next.js with TypeScript, Tailwind, ESLint, and App Router
+npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias "@/*" --use-npm --no-turbopack
+
+y (answer yes to prompts)
+```
+
 Create a `.env.local` file:
 
 ```env
